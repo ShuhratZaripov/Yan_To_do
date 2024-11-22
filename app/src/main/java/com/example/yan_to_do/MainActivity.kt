@@ -21,9 +21,7 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("task_screen") {
                     TaskScreen(
-                        onAdd = {
-                            // Логика для добавления задачи
-                        },
+                        onAdd = {},
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -31,3 +29,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
