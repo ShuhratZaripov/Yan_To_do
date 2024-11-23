@@ -1,5 +1,6 @@
 package com.example.yan_to_do.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,19 +15,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,20 +53,23 @@ import com.example.yan_to_do.models.TodoItem
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.UUID
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
+fun TaskScreen(
+    onAdd: (TodoItem) -> Unit,
+    onBack: () -> Unit,
+    onDelete: (String) -> Unit
+) {
     val task = CurrentTask.currentTask
     var taskText by remember { mutableStateOf(task?.text ?: "") }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-// Инициализация состояния с типом Importance
-    var selectedOption: Importance by remember { mutableStateOf(Importance.LOW) }
-    var dateText by remember { mutableStateOf(task?.deadline) }
-    var checked by remember {
-        mutableStateOf(task?.deadline != null)
-    }
+    var selectedOption by remember { mutableStateOf(task?.importance ?: Importance.LOW) }
+    var dateLong by remember { mutableStateOf(task?.deadline?.toLongOrNull()) }
+    var checked by remember { mutableStateOf(task?.deadline != null) }
 
     val context = LocalContext.current
 
@@ -75,8 +79,7 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
             context,
             { _, year, month, dayOfMonth ->
                 calendar.set(year, month, dayOfMonth)
-                val dateFormat = SimpleDateFormat("d MMMM yyyy", Locale("ru"))
-                dateText = dateFormat.format(calendar.time)
+                dateLong = calendar.timeInMillis
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -86,17 +89,17 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
 
     LaunchedEffect(checked) {
         if (checked) {
-            if (dateText == null) {
+            if (dateLong == null) {
                 showDatePicker()
             }
         } else {
-            dateText = null
+            dateLong = null
         }
     }
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
+            TopAppBar(
                 title = { Text("") },
                 navigationIcon = {
                     IconButton(onClick = { onBack() }) {
@@ -108,15 +111,25 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
                 },
                 actions = {
                     TextButton(onClick = {
-                        onAdd(TodoItem(taskText, selectedOption.toString(), dateText)) // Save the task
+                        val newTask = TodoItem(
+                            id = task?.id ?: UUID.randomUUID().toString(),
+                            text = taskText,
+                            importance = selectedOption.toString(),
+                            deadline = dateLong?.let { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it) },
+                            isCompleted = task?.isCompleted ?: false,
+                            createdAt = task?.createdAt ?: System.currentTimeMillis().toString(),
+                            changedAt = System.currentTimeMillis().toString(),
+                            lastUpdatedBy = task?.lastUpdatedBy ?: "User"
+                        )
+                        onAdd(newTask)
                         onBack()
                     }) {
-                        Text("Save", color = Color(0xFF2196F3))
+                        Text("Save", color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                modifier = Modifier.shadow(if (scrollBehavior.state.overlappedFraction > 0f) 8.dp else 0.dp),
-                colors = TopAppBarDefaults.smallTopAppBarColors(
+                modifier = Modifier.run { shadow(if (scrollBehavior.state.overlappedFraction > 0f) 8.dp else 0.dp) },
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = if (scrollBehavior.state.overlappedFraction > 0f) {
                         Color(0xFFEFEFEF)
                     } else {
@@ -129,6 +142,7 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
         LazyColumn(
             contentPadding = innerPadding,
             modifier = Modifier
+                .background(Color(0xFFF7F6F2))
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
         ) {
@@ -137,18 +151,24 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
                     value = taskText,
                     onValueChange = { taskText = it },
                     textStyle = TextStyle(fontSize = 16.sp),
-                    placeholder = { Text("Enter task description...", fontSize = 16.sp) },
+                    placeholder = { Text("Что нужно сделать?", fontSize = 16.sp) },
                     modifier = Modifier
                         .heightIn(104.dp)
                         .fillMaxWidth()
                         .padding(16.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    colors = TextFieldDefaults.textFieldColors(
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        errorCursorColor = MaterialTheme.colorScheme.error
                     )
                 )
+
             }
             item {
                 Row(
@@ -156,14 +176,14 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Importance", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    MultiToggleButton(selectedOption) { newSelection ->
+                    Text("Важность", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    MultiToggleButton(selectedOption as Importance) { newSelection ->
                         selectedOption = newSelection
                     }
                 }
             }
             item {
-                Divider(modifier = Modifier.padding(16.dp))
+                HorizontalDivider(modifier = Modifier.padding(16.dp))
             }
             item {
                 Row(
@@ -172,8 +192,14 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Due Date", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(text = dateText ?: "", fontSize = 14.sp, color = Color.Blue)
+                        Text("Срок", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = (dateLong?.let {
+                                SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(it)
+                            } ?: ""),
+                            fontSize = 14.sp,
+                            color = Color.Blue
+                        )
                     }
                     Switch(
                         checked = checked,
@@ -191,7 +217,9 @@ fun TaskScreen(onAdd: (TodoItem) -> Unit, onBack: () -> Unit) {
             item { HorizontalDivider() }
             item {
                 TextButton(
-                    onClick = { onBack() },
+                    onClick = {
+                        task?.id?.let { onDelete(it) }
+                    },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
                     Icon(

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,12 +89,12 @@ fun MultiToggleButton(
                 }
 
                 if (index != toggleStates.size - 1) {
-                    Divider(
-                        color = Color.DarkGray,
+                    HorizontalDivider(
                         modifier = Modifier
                             .padding(1.dp)
                             .width(0.8.dp)
-                            .height(20.dp)
+                            .height(20.dp),
+                        color = Color.DarkGray
                     )
                 }
             }
