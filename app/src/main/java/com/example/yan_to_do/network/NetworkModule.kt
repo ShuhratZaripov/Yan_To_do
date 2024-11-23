@@ -19,7 +19,8 @@ object NetworkModule {
             .client(okHttpClient)
             .build()
     }
-    fun createTaskService(): TaskService {
-        return createRetrofit().create(TaskService::class.java)
+
+    fun createTaskService(tokenProvider: TokenProvider): TaskService {
+        return createRetrofit(tokenProvider).create(TaskService::class.java)
     }
 }

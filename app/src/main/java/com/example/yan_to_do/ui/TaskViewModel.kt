@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TaskViewModel(taskRepository: TaskRepository, private val tokenProvider: TokenProvider) : ViewModel() {
-
+class TaskViewModel(
+    private val repository: TaskRepository,
+    private val tokenProvider: TokenProvider
+) : ViewModel() {
     private val apiService = NetworkModule.createRetrofit(tokenProvider).create(ApiService::class.java)
 
     private val _tasks = MutableStateFlow<List<TodoItem>>(emptyList())
@@ -22,11 +24,11 @@ class TaskViewModel(taskRepository: TaskRepository, private val tokenProvider: T
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun getTasks() {
+    private fun getTasks() {
         viewModelScope.launch {
             try {
-                val token = "Celeborn"
-                val tasks = apiService.getTasks(token)
+                val token = "Bearer ${tokenProvider.getToken()}"
+                val tasks = repository.getTasks(token)
                 _tasks.value = tasks
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to load tasks: ${e.message}"
@@ -34,22 +36,31 @@ class TaskViewModel(taskRepository: TaskRepository, private val tokenProvider: T
         }
     }
 
+    fun deleteTask(id: String) {
+        viewModelScope.launch {
+            try {
+                val token = "Bearer ${tokenProvider.getToken()}"
+                repository.removeTask(id, token)
+                getTasks()
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to delete task: ${e.message}"
+            }
+        }
+    }
+
     fun addTask(todoItem: TodoItem) {
         viewModelScope.launch {
             try {
-                val response = apiService.postData(
-                    token = "Bearer ${tokenProvider.getToken()}",
-                    revision = 0,
-                    todoRequest = TodoRequest(status = "ok", element = todoItem)
-                )
+                val token = "Bearer ${tokenProvider.getToken()}"
+                val todoRequest = TodoRequest("add", todoItem)
+                val response = repository.addTask(todoItem, token)
                 if (response.isSuccessful) {
-
-                    _tasks.value = response.body()?.list ?: emptyList()
+                    getTasks()
                 } else {
-                    _errorMessage.value = "Error: ${response.message()}"
+                    _errorMessage.value = "Error adding task: ${response.message()}"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error: ${e.message}"
+                _errorMessage.value = "Error adding task: ${e.message}"
             }
         }
     }

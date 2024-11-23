@@ -1,11 +1,13 @@
 package com.example.yan_to_do.repositories
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.example.yan_to_do.models.Importance
 import com.example.yan_to_do.models.TodoItem
 
 object TodoItemsRepository {
-    private val todoItems = mutableStateListOf<TodoItem>()
+    var todoItemsList = mutableStateListOf<TodoItem>()
+    fun getTodoItems(): SnapshotStateList<TodoItem> = todoItemsList
 
     init {
         repeat(20) { index ->
@@ -18,24 +20,30 @@ object TodoItemsRepository {
                     else -> Importance.HIGH
                 }.toString(),
                 deadline = if (index % 4 == 0) "March 1, 2024" else null,
-                isCompleted = index % 5 == 0
+                isCompleted = index % 5 == 0,
+                createdAt = System.currentTimeMillis().toString(), // Добавлено значение
+                changedAt = System.currentTimeMillis().toString(), // Добавлено значение
+                lastUpdatedBy = "System" // Добавлено значение
             )
-            todoItems.add(todoItem)
+            todoItemsList.add(todoItem)
         }
     }
+    fun removeTask(id: String) {
+        todoItemsList.removeIf { it.id == id }
+    }
 
-    fun getAllTodoItems(): List<TodoItem> = todoItems
+
+    fun getAllTodoItems(): List<TodoItem> = todoItemsList
 
     fun addTodoItem(todoItem: TodoItem) {
-        todoItems.add(todoItem)
+        todoItemsList.add(todoItem)
     }
 
     fun removeTodoItem(id: String) {
-        todoItems.removeIf { it.id == id }
+        todoItemsList.removeIf { it.id == id }
     }
 
     fun getValueById(id: String): TodoItem? {
-        return todoItems.firstOrNull { it.id == id }
+        return todoItemsList.firstOrNull { it.id == id }
     }
-
 }

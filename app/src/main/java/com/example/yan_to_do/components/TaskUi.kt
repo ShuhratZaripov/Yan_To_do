@@ -49,8 +49,8 @@ fun TaskUi(task: TodoItem, onTaskClick: () -> Unit) {
     val inlineContent = mapOf(
         "icon" to InlineTextContent(
             placeholder = Placeholder(
-                width = if (task.importance?.let { Importance.valueOf(it) } == Importance.NORMAL) 0.sp else 24.sp,
-                height = if (task.importance?.let { Importance.valueOf(it) } == Importance.NORMAL) 0.sp else 24.sp,
+                width = if (task.importance.let { Importance.valueOf(it) } == NORMAL) 0.sp else 24.sp,
+                height = if (task.importance.let { Importance.valueOf(it) } == NORMAL) 0.sp else 24.sp,
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center
             )
         ) {
@@ -85,9 +85,9 @@ fun TaskUi(task: TodoItem, onTaskClick: () -> Unit) {
             Image(
                 painter = painterResource(
                     id = if (task.isCompleted) R.drawable.img else when (task.importance) {
-                        Importance.HIGH.toString() -> R.drawable.img_2
-                        Importance.LOW.toString() -> R.drawable.img_1
-                        Importance.NORMAL.toString() -> R.drawable.img_1
+                        HIGH.toString() -> R.drawable.img_2
+                        LOW.toString() -> R.drawable.img_1
+                        NORMAL.toString() -> R.drawable.img_1
                         else -> R.drawable.img_1  // Add a fallback for any other case
                     }
 

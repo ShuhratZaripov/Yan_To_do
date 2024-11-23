@@ -1,6 +1,7 @@
 package com.example.yan_to_do.viewModels
 
 import android.util.Log
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yan_to_do.models.TodoItem
@@ -91,7 +92,7 @@ class MainViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val todoItems = response.body()?.list ?: emptyList()
                     _todoList.value = todoItems
-                    TodoItemsRepository.todoItems = todoItems.toMutableList()
+                    TodoItemsRepository.todoItemsList = todoItems.toMutableList() as SnapshotStateList<TodoItem>
                     Log.d("MainViewModel", "Todo List: $todoItems")
                 } else {
                     val errorMessage = when (response.code()) {
@@ -128,7 +129,7 @@ class MainViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val todoItems = response.body()?.list ?: emptyList()
                     _todoList.value = todoItems
-                    TodoItemsRepository.todoItems = todoItems.toMutableList()
+                    TodoItemsRepository.todoItemsList = todoItems.toMutableList() as SnapshotStateList<TodoItem>
                     _currentRevision.value = revision
                     Log.d("MainViewModel", "request: $request")
                 } else {
@@ -166,7 +167,7 @@ class MainViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val todoItems = response.body()?.list ?: emptyList()
                     _todoList.value = todoItems
-                    TodoItemsRepository.todoItems = todoItems.toMutableList()
+                    TodoItemsRepository.todoItemsList = todoItems.toMutableList() as SnapshotStateList<TodoItem>
                     _currentRevision.value = revision
                     Log.d("sneck", "Updated Todo List: $todoItems")
                 } else {
@@ -203,7 +204,7 @@ class MainViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val todoItems = response.body()?.list ?: emptyList()
                     _todoList.value = todoItems
-                    TodoItemsRepository.todoItems = todoItems.toMutableList()
+                    TodoItemsRepository.todoItemsList = todoItems.toMutableList() as SnapshotStateList<TodoItem>
                     _currentRevision.value = revision
                     Log.d("MainViewModel", "Todo item deleted: $id")
                 } else {
